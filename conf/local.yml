@@ -1,0 +1,23 @@
+core:
+  name: "demo"
+
+  addr: "0.0.0.0:8080"
+  debug: false
+
+  metrics_username: "test"
+  metrics_password: "test"
+
+  secret: "test123123"
+
+db:
+  addr: "127.0.0.1:3306"
+  user: "root"
+  password: "123qwe"
+  database: "test"
+  max_open_conn: 10
+  max_idle_conn: 2
+
+cache:
+  addr: "127.0.0.1:6379"
+  password: ""
+  db: 0
