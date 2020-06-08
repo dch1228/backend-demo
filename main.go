@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/duchenhao/backend-demo/internal/bus"
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
@@ -47,6 +48,8 @@ func main() {
 
 	dao.Init()
 	defer dao.Close()
+
+	defer bus.Close()
 
 	rootCmd.AddCommand(serverCmd)
 	rootCmd.AddCommand(migrateCmd)

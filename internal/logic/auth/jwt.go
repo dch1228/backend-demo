@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -39,7 +38,7 @@ func createAccessToken(userId string) (string, error) {
 	return signedAccessToken, nil
 }
 
-func createToken(_ context.Context, cmd *model.CreateTokenCommand) error {
+func createToken(cmd *model.CreateTokenCommand) error {
 	signedAccessToken, err := createAccessToken(cmd.User.Id)
 	if err != nil {
 		logger.Error(err.Error())
@@ -63,7 +62,7 @@ func createToken(_ context.Context, cmd *model.CreateTokenCommand) error {
 	return nil
 }
 
-func lookupToken(_ context.Context, cmd *model.LookupTokenCommand) error {
+func lookupToken(cmd *model.LookupTokenCommand) error {
 	token, err := jwt.ParseWithClaims(cmd.Token, &model.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(conf.Core.Secret), nil
 	})
@@ -80,7 +79,7 @@ func lookupToken(_ context.Context, cmd *model.LookupTokenCommand) error {
 	return model.ErrTokenInvalid
 }
 
-func refreshToken(_ context.Context, cmd *model.RefreshTokenCommand) error {
+func refreshToken(cmd *model.RefreshTokenCommand) error {
 	token, err := jwt.ParseWithClaims(cmd.RefreshToken, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(conf.Core.Secret), nil
 	})

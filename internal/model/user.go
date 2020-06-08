@@ -32,12 +32,16 @@ type UserClaims struct {
 // QUERIES
 
 type GetUserByNameQuery struct {
+	Ctx *ReqContext
+
 	Name string
 
 	User *User
 }
 
 type LoginQuery struct {
+	Ctx *ReqContext
+
 	Name     string
 	Password string
 
@@ -45,12 +49,16 @@ type LoginQuery struct {
 }
 
 type GetUserByIdQuery struct {
+	Ctx *ReqContext
+
 	UserId string
 
 	User *User
 }
 
 type GetSignedInUserQuery struct {
+	Ctx *ReqContext
+
 	UserId string
 
 	User *SignedInUser
@@ -60,6 +68,14 @@ type GetSignedInUserQuery struct {
 // COMMANDS
 
 type CreateUserCommand struct {
+	Ctx *ReqContext
+
+	User *User
+}
+
+type SignUpCommand struct {
+	Ctx *ReqContext
+
 	Name     string
 	Password string
 
@@ -67,6 +83,8 @@ type CreateUserCommand struct {
 }
 
 type UpdateUserLastSeenAtCommand struct {
+	Ctx *ReqContext
+
 	UserId string
 }
 

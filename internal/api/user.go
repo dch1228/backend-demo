@@ -14,8 +14,10 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 		return Error(400, "密码不匹配")
 	}
 
-	existing := &model.GetUserByNameQuery{Name: form.Name}
-	if err := bus.Dispatch(ctx, existing); err != nil && err != model.ErrUserNotFound {
+	existing := &model.GetUserByNameQuery{
+		Ctx:  ctx,
+		Name: form.Name}
+	if err := bus.Dispatch(existing); err != nil && err != model.ErrUserNotFound {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}
@@ -24,10 +26,11 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 		return Error(400, "用户已存在")
 	}
 
-	cmd := &model.CreateUserCommand{}
+	cmd := &model.SignUpCommand{}
+	cmd.Ctx = ctx
 	cmd.Name = form.Name
 	cmd.Password = form.Password
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := bus.Dispatch(cmd); err != nil {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}
@@ -36,7 +39,7 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 	tokenCmd := &model.CreateTokenCommand{
 		User: user,
 	}
-	if err := bus.Dispatch(ctx, tokenCmd); err != nil {
+	if err := bus.Dispatch(tokenCmd); err != nil {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}
@@ -50,9 +53,10 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 
 func login(ctx *model.ReqContext, form *forms.LoginForm) Response {
 	query := &model.LoginQuery{}
+	query.Ctx = ctx
 	query.Name = form.Name
 	query.Password = form.Password
-	if err := bus.Dispatch(ctx, query); err != nil {
+	if err := bus.Dispatch(query); err != nil {
 		ctx.Logger.Error(err.Error())
 		if err == model.ErrInvalidPassword {
 			return AuthError()
@@ -63,7 +67,7 @@ func login(ctx *model.ReqContext, form *forms.LoginForm) Response {
 	tokenCmd := &model.CreateTokenCommand{
 		User: query.User,
 	}
-	if err := bus.Dispatch(ctx, tokenCmd); err != nil {
+	if err := bus.Dispatch(tokenCmd); err != nil {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}
@@ -78,7 +82,7 @@ func login(ctx *model.ReqContext, form *forms.LoginForm) Response {
 func refreshToken(ctx *model.ReqContext, form *forms.RefreshTokenForm) Response {
 	query := &model.RefreshTokenCommand{}
 	query.RefreshToken = form.Token
-	if err := bus.Dispatch(ctx, query); err != nil {
+	if err := bus.Dispatch(query); err != nil {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}

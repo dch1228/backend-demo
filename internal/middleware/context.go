@@ -36,15 +36,18 @@ func initContextWithToken(ctx *model.ReqContext) bool {
 	cmd := &model.LookupTokenCommand{
 		Token: token,
 	}
-	if err := bus.Dispatch(ctx, cmd); err != nil {
+	if err := bus.Dispatch(cmd); err != nil {
 		ctx.Logger.Error("Failed to lookup user based on header", zap.Error(err))
 		return false
 	}
 
 	claims := cmd.Claims
 
-	query := model.GetSignedInUserQuery{UserId: claims.UserId}
-	if err := bus.Dispatch(ctx, &query); err != nil {
+	query := model.GetSignedInUserQuery{
+		Ctx:    ctx,
+		UserId: claims.UserId,
+	}
+	if err := bus.Dispatch(&query); err != nil {
 		ctx.Logger.Error("Failed to get user with id", zap.String("user_id", claims.UserId), zap.Error(err))
 		return false
 	}
@@ -57,7 +60,7 @@ func initContextWithToken(ctx *model.ReqContext) bool {
 	// 30分钟更新一次
 	if user.ShouldUpdateLastSeenAt() {
 		ctx.Logger.Info("updating user last seen at")
-		if err := bus.Dispatch(ctx, &model.UpdateUserLastSeenAtCommand{UserId: user.UserId}); err != nil {
+		if err := bus.Dispatch(&model.UpdateUserLastSeenAtCommand{Ctx: ctx, UserId: user.UserId}); err != nil {
 			ctx.Logger.Error("failed update user last seen at", zap.Error(err))
 		}
 	}
