@@ -11,10 +11,6 @@ import (
 	"github.com/duchenhao/backend-demo/internal/model"
 )
 
-var (
-	logger = log.Named("jwt auth")
-)
-
 func init() {
 	bus.AddHandler(createToken)
 	bus.AddHandler(lookupToken)
@@ -22,6 +18,8 @@ func init() {
 }
 
 func createAccessToken(userId string) (string, error) {
+	logger := log.Named("jwt.createAccessToken")
+
 	now := time.Now()
 	userClaims := &model.UserClaims{
 		UserId: userId,
@@ -39,6 +37,8 @@ func createAccessToken(userId string) (string, error) {
 }
 
 func createToken(cmd *model.CreateTokenCommand) error {
+	logger := log.Named("jwt.createToken")
+
 	signedAccessToken, err := createAccessToken(cmd.User.Id)
 	if err != nil {
 		logger.Error(err.Error())
@@ -57,12 +57,16 @@ func createToken(cmd *model.CreateTokenCommand) error {
 		return err
 	}
 
-	cmd.AccessToken = signedAccessToken
-	cmd.RefreshToken = signedRefreshToken
+	cmd.Result = &model.TokenPair{
+		AccessToken:  signedAccessToken,
+		RefreshToken: signedRefreshToken,
+	}
 	return nil
 }
 
 func lookupToken(cmd *model.LookupTokenCommand) error {
+	logger := log.Named("jwt.lookupToken")
+
 	token, err := jwt.ParseWithClaims(cmd.Token, &model.UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(conf.Core.Secret), nil
 	})
@@ -80,6 +84,8 @@ func lookupToken(cmd *model.LookupTokenCommand) error {
 }
 
 func refreshToken(cmd *model.RefreshTokenCommand) error {
+	logger := log.Named("jwt.refreshToken")
+
 	token, err := jwt.ParseWithClaims(cmd.RefreshToken, jwt.MapClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(conf.Core.Secret), nil
 	})

@@ -3,9 +3,10 @@ package user
 import (
 	"time"
 
-	"github.com/duchenhao/backend-demo/internal/events"
+	"github.com/rs/xid"
 
 	"github.com/duchenhao/backend-demo/internal/bus"
+	"github.com/duchenhao/backend-demo/internal/events"
 	"github.com/duchenhao/backend-demo/internal/model"
 	"github.com/duchenhao/backend-demo/internal/util"
 )
@@ -13,10 +14,12 @@ import (
 func init() {
 	bus.AddHandler(getSignedInUser)
 	bus.AddHandler(signUp)
+	bus.AddHandler(login)
 }
 
 func signUp(cmd *model.SignUpCommand) error {
 	user := &model.User{
+		Id:         xid.New().String(),
 		Name:       cmd.Name,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
@@ -42,14 +45,30 @@ func signUp(cmd *model.SignUpCommand) error {
 
 	cmd.User = createCmd.User
 
-	event := events.OnCreateUser{}
+	event := &events.OnCreateUser{}
 	event.UserId = cmd.User.Id
 	bus.Publish(event)
 	return nil
 }
 
+func login(query *model.LoginQuery) error {
+	userQuery := &model.GetUserByNameQuery{Ctx: query.Ctx, Name: query.Name}
+	if err := bus.Dispatch(userQuery); err != nil {
+		query.Ctx.Logger.Error(err.Error())
+		return err
+	}
+
+	user := userQuery.User
+	if err := util.ValidatePassword(query.Password, user.Password, user.Salt); err != nil {
+		return err
+	}
+
+	query.User = user
+	return nil
+}
+
 func getSignedInUser(query *model.GetSignedInUserQuery) error {
-	userQuery := &model.GetUserByIdQuery{UserId: query.UserId}
+	userQuery := &model.GetUserByIdQuery{Ctx: query.Ctx, UserId: query.UserId}
 	if err := bus.Dispatch(userQuery); err != nil {
 		query.Ctx.Logger.Error(err.Error())
 		return err

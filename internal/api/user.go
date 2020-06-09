@@ -1,8 +1,6 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"github.com/duchenhao/backend-demo/internal/api/forms"
 	"github.com/duchenhao/backend-demo/internal/bus"
 	"github.com/duchenhao/backend-demo/internal/model"
@@ -16,7 +14,8 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 
 	existing := &model.GetUserByNameQuery{
 		Ctx:  ctx,
-		Name: form.Name}
+		Name: form.Name,
+	}
 	if err := bus.Dispatch(existing); err != nil && err != model.ErrUserNotFound {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
@@ -44,11 +43,7 @@ func signUp(ctx *model.ReqContext, form *forms.SignUpForm) Response {
 		return ServerError()
 	}
 
-	res := gin.H{
-		"access_token":  tokenCmd.AccessToken,
-		"refresh_token": tokenCmd.RefreshToken,
-	}
-	return JSON(res)
+	return JSON(tokenCmd.Result)
 }
 
 func login(ctx *model.ReqContext, form *forms.LoginForm) Response {
@@ -72,23 +67,24 @@ func login(ctx *model.ReqContext, form *forms.LoginForm) Response {
 		return ServerError()
 	}
 
-	res := gin.H{
-		"access_token":  tokenCmd.AccessToken,
-		"refresh_token": tokenCmd.RefreshToken,
-	}
-	return JSON(res)
+	return JSON(tokenCmd.Result)
 }
 
 func refreshToken(ctx *model.ReqContext, form *forms.RefreshTokenForm) Response {
 	query := &model.RefreshTokenCommand{}
-	query.RefreshToken = form.Token
+	query.TokenPair = &model.TokenPair{RefreshToken: form.Token}
 	if err := bus.Dispatch(query); err != nil {
 		ctx.Logger.Error(err.Error())
 		return ServerError()
 	}
+	return JSON(query.TokenPair)
+}
 
-	res := gin.H{
-		"access_token": query.AccessToken,
+func getUserInfo(ctx *model.ReqContext) Response {
+	ret := &model.UserInfo{
+		UserId: ctx.SignedInUser.UserId,
+		Stores: make([]*model.Store, 0),
 	}
-	return JSON(res)
+
+	return JSON(ret)
 }

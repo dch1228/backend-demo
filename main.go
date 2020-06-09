@@ -5,6 +5,8 @@ import (
 	"github.com/spf13/cobra"
 	flag "github.com/spf13/pflag"
 
+	_ "github.com/duchenhao/backend-demo/internal/logic"
+
 	"github.com/duchenhao/backend-demo/internal/conf"
 	"github.com/duchenhao/backend-demo/internal/dao"
 	"github.com/duchenhao/backend-demo/internal/log"

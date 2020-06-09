@@ -91,13 +91,16 @@ type UpdateUserLastSeenAtCommand struct {
 type CreateTokenCommand struct {
 	User *User
 
-	AccessToken  string
-	RefreshToken string
+	Result *TokenPair
+}
+
+type TokenPair struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type RefreshTokenCommand struct {
-	RefreshToken string
-	AccessToken  string
+	*TokenPair
 }
 
 type LookupTokenCommand struct {
@@ -117,4 +120,9 @@ type SignedInUser struct {
 
 func (u *SignedInUser) ShouldUpdateLastSeenAt() bool {
 	return time.Since(u.LastSeenAt) > 30*time.Minute
+}
+
+type UserInfo struct {
+	UserId string   `json:"user_id"`
+	Stores []*Store `json:"stores"`
 }

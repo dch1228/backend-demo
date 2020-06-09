@@ -4,6 +4,9 @@ import (
 	"errors"
 	"reflect"
 
+	"go.uber.org/zap"
+
+	"github.com/duchenhao/backend-demo/internal/log"
 	"github.com/duchenhao/backend-demo/internal/util"
 )
 
@@ -20,15 +23,18 @@ var ErrHandlerNotFound = errors.New("handler not found")
 
 func AddHandler(handler handlerFunc) {
 	handlerType := reflect.TypeOf(handler)
-	queryTypeName := handlerType.In(1).Elem().Name()
+	queryTypeName := handlerType.In(0).Elem().Name()
 	handlers[queryTypeName] = handler
 }
 
 func Dispatch(msg Msg) error {
+	logger := log.Named("bus.Dispatch")
+
 	msgName := reflect.TypeOf(msg).Elem().Name()
 	handler := handlers[msgName]
 
 	if handler == nil {
+		logger.Error("handler not found", zap.String("msg_name", msgName))
 		return ErrHandlerNotFound
 	}
 

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
@@ -38,6 +39,20 @@ func initContextWithToken(ctx *model.ReqContext) bool {
 	}
 	if err := bus.Dispatch(cmd); err != nil {
 		ctx.Logger.Error("Failed to lookup user based on header", zap.Error(err))
+		switch err.(type) {
+		case jwt.ValidationError:
+			jErr := err.(jwt.ValidationError)
+			if jErr.Errors&jwt.ValidationErrorExpired != 0 {
+				ctx.Header("WWW-Authenticate", "The access token expired")
+				ctx.AbortWithStatusJSON(401, gin.H{
+					"message": "The access token expired",
+				})
+				return false
+			}
+		}
+		ctx.AbortWithStatusJSON(401, gin.H{
+			"message": "The access token invalid",
+		})
 		return false
 	}
 
@@ -49,6 +64,15 @@ func initContextWithToken(ctx *model.ReqContext) bool {
 	}
 	if err := bus.Dispatch(&query); err != nil {
 		ctx.Logger.Error("Failed to get user with id", zap.String("user_id", claims.UserId), zap.Error(err))
+		if err == model.ErrUserNotFound {
+			ctx.AbortWithStatusJSON(400, gin.H{
+				"message": err.Error(),
+			})
+		} else {
+			ctx.AbortWithStatusJSON(500, gin.H{
+				"message": "Internal Error",
+			})
+		}
 		return false
 	}
 

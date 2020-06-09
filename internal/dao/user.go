@@ -1,7 +1,6 @@
 package dao
 
 import (
-	"context"
 	"time"
 
 	"github.com/duchenhao/backend-demo/internal/bus"
@@ -15,10 +14,10 @@ func init() {
 	bus.AddHandler(getUserById)
 }
 
-func getUserByName(ctx context.Context, query *model.GetUserByNameQuery) error {
+func getUserByName(query *model.GetUserByNameQuery) error {
 	user := &model.User{}
 
-	if has, err := db.Context(ctx).Where("name=?", query.Name).Get(user); err != nil {
+	if has, err := db.Context(query.Ctx).Where("name=?", query.Name).Get(user); err != nil {
 		return err
 	} else if !has {
 		return model.ErrUserNotFound

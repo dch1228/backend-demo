@@ -99,6 +99,7 @@ func (l *Logger) IsShowSQL() bool {
 
 func formatSql(sql string, args []interface{}) string {
 	formattedValues := make([]string, 0)
+	var realSql string
 	for _, value := range args {
 		indirectValue := reflect.Indirect(reflect.ValueOf(value))
 		if indirectValue.IsValid() {
@@ -138,19 +139,19 @@ func formatSql(sql string, args []interface{}) string {
 	if numericPlaceHolderRegexp.MatchString(sql) {
 		for index, value := range formattedValues {
 			placeholder := fmt.Sprintf(`\$%d([^\d]|$)`, index+1)
-			sql = regexp.MustCompile(placeholder).ReplaceAllString(sql, value+"$1")
+			realSql = regexp.MustCompile(placeholder).ReplaceAllString(sql, value+"$1")
 		}
 	} else {
 		formattedValuesLength := len(formattedValues)
 		for index, value := range sqlRegexp.Split(sql, -1) {
-			sql += value
+			realSql += value
 			if index < formattedValuesLength {
-				sql += formattedValues[index]
+				realSql += formattedValues[index]
 			}
 		}
 	}
 
-	return sql
+	return realSql
 }
 
 func isPrintable(s string) bool {
